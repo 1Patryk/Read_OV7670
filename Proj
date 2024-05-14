@@ -1,0 +1,148 @@
+// Za dużo prądu pobiera, trzeba tranzystorami DIGIT puścić
+
+int del = 6;
+int trigger = 22;    // pin number
+int echo = 23;       // pin number 
+int duration;      // duration of input echo
+int hund;
+int ten;
+int one;
+int distance;     
+int Digit_1 = 8;
+int Digit_2 = 9;
+int Digit_3 = 10;
+int Digit_4 = 11;
+int latchPin = 6; // RCLK
+int clockPin = 7; // SRCLK
+int dataPin = 5; // SER 
+int plus = 0;
+int minus = 255;
+
+int print_digit(int* digit)
+{
+  switch(*digit)
+  {
+    case 0:
+      *digit = 3;
+      break;
+    case 1:
+      *digit = 159;
+      break;
+    case 2:
+      *digit = 37;
+      break;
+    case 3:
+      digit = 13;
+      break;
+    case 4:
+      digit = 153;
+      break;
+    case 5:
+      digit = 73;
+      break;
+    case 6:
+      digit = 96;
+      break;
+    case 7:
+      digit = 31;
+      break;
+    case 8:
+      digit = 1;
+      break;
+    case 9:
+      digit = 9;
+      break;
+    default:
+      digit = 1;
+      break;
+  }
+}
+
+void setup() 
+{
+  Serial.begin(9600);
+  pinMode(trigger, OUTPUT);
+  digitalWrite(trigger, LOW);
+  delayMicroseconds(2);
+  pinMode(echo, INPUT);
+
+  pinMode(Digit_1, OUTPUT);
+  pinMode(Digit_2, OUTPUT);
+  pinMode(Digit_3, OUTPUT);
+  pinMode(Digit_4, OUTPUT);
+
+  pinMode(latchPin, OUTPUT);
+  pinMode(clockPin, OUTPUT);
+  pinMode(dataPin, OUTPUT);
+
+  delay(1000);
+}
+
+void loop() 
+{
+  digitalWrite(trigger, HIGH);
+  delayMicroseconds(10); 
+  digitalWrite(trigger, LOW);
+  duration = pulseIn(echo, HIGH);
+  distance = duration / 58;
+  hund = distance / 100;
+  ten = (distance - (hund * 100)) / 10;
+  one = distance - (hund * 100) - (ten * 10);
+
+  Serial.print("\n");
+  Serial.print(hund);
+  Serial.print("\n");
+  Serial.print(ten);
+  Serial.print("\n");
+  Serial.print(one);
+  Serial.print("\n");
+
+  print_digit(&hund);
+  print_digit(&ten);
+  print_digit(&one);
+
+  // start send data to shift register 
+
+
+  // 1 segment
+  analogWrite(Digit_1, plus);
+  digitalWrite(latchPin, LOW);
+
+  shiftOut(dataPin, clockPin, LSBFIRST, one);
+
+  digitalWrite(latchPin, HIGH);
+  delay(del);
+  analogWrite(Digit_1, minus);
+  
+  // 2 segment
+  analogWrite(Digit_2, plus);
+  digitalWrite(latchPin, LOW);
+
+  shiftOut(dataPin, clockPin, LSBFIRST, hund);
+
+  digitalWrite(latchPin, HIGH);
+  delay(del);
+  analogWrite(Digit_2, minus);
+
+  // 3 segment
+  analogWrite(Digit_3, plus);
+  digitalWrite(latchPin, LOW);
+
+  shiftOut(dataPin, clockPin, LSBFIRST, ten);
+
+  digitalWrite(latchPin, HIGH);
+  delay(del);
+  analogWrite(Digit_3, minus);
+
+  // 4 segment
+  analogWrite(Digit_4, plus);
+  digitalWrite(latchPin, LOW);
+
+  shiftOut(dataPin, clockPin, LSBFIRST, one);
+
+  digitalWrite(latchPin, HIGH);
+  delay(del);
+  analogWrite(Digit_4, minus);
+
+  // end send data to shitf register
+}
